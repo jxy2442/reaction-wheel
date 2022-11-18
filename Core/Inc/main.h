@@ -32,6 +32,9 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "../Devices/i3g4250d/gyro.h"
+#include "../Devices/lis3mdl/mag.h"
+#include "../Devices/lsm303agr/accel.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

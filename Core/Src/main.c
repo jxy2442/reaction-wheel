@@ -30,7 +30,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -56,6 +55,16 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+// overwrite _write so that printf sends to SWO
+int _write(int file, char* ptr, int len)
+{
+	for (int i = 0; i < len; i++)
+	{
+		ITM_SendChar(ptr[i]);
+	}
+	return len;
+}
 
 /* USER CODE END 0 */
 
@@ -89,8 +98,6 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI1_Init();
   MX_I2C1_Init();
-  MX_TIM10_Init();
-  MX_TIM11_Init();
   MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
 

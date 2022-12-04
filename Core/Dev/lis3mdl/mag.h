@@ -16,9 +16,9 @@
 
 #include<math.h>
 
-#include "lis3mdl_reg.h"
-#include "../datatypes.h"
 #include "stm32f4xx_hal.h"
+#include "../../Dev/datatypes.h"
+#include "lis3mdl_reg.h"
 
 #define LIS3MDL_TIMEOUT 10
 

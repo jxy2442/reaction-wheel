@@ -8,9 +8,9 @@
 #ifndef INC_SENSORS_ACCEL_H_
 #define INC_SENSORS_ACCEL_H_
 
-#include "lsm303agr_reg.h"
-#include "../datatypes.h"
 #include "stm32f4xx_hal.h"
+#include "../../Dev/datatypes.h"
+#include "../../Dev/lsm303agr/lsm303agr_reg.h"
 
 #define ACCEL_UNIT_MPS // convert miligee to meters per second
 #define LSM303AGR_XL_TIMEOUT 100

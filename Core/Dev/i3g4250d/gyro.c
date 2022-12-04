@@ -5,7 +5,7 @@
  *      Author: yevge
  */
 
-#include "gyro.h"
+#include "../../Dev/i3g4250d/gyro.h"
 
 void init_gyro(stmdev_ctx_t* ctx, void* handle)
 {

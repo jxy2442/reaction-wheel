@@ -8,9 +8,9 @@
 #ifndef INC_SENSORS_GYRO_H_
 #define INC_SENSORS_GYRO_H_
 
-#include "i3g4250d_reg.h"
-#include "../datatypes.h"
 #include "stm32f4xx_hal.h"
+#include "../../Dev/datatypes.h"
+#include "../../Dev/i3g4250d/i3g4250d_reg.h"
 
 #define GYRO_FS_dps 500 // 245, 500, 2000
 #define I3G4250D_ODR I3G4250D_ODR_400Hz

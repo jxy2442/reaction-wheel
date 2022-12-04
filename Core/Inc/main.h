@@ -32,9 +32,12 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include "../Devices/i3g4250d/gyro.h"
-#include "../Devices/lis3mdl/mag.h"
-#include "../Devices/lsm303agr/accel.h"
+#include "../Dev/i3g4250d/gyro.h"
+#include "../Dev/lis3mdl/mag.h"
+#include "../Dev/lsm303agr/accel.h"
+#include "state.h"
+#include "../Lib/sched/badsched.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -90,6 +93,12 @@ void Error_Handler(void);
 #define EXTI1_Pin GPIO_PIN_1
 #define EXTI1_GPIO_Port GPIOE
 /* USER CODE BEGIN Private defines */
+
+#define LED_BANK LD4_GPIO_Port
+#define LED_ORANGE LD3_Pin
+#define LED_GREEN LD4_Pin
+#define LED_RED LD5_Pin
+#define LED_BLUE LD6_Pin
 
 /* USER CODE END Private defines */
 

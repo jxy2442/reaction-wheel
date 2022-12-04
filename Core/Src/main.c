@@ -22,6 +22,7 @@
 #include "spi.h"
 #include "tim.h"
 #include "gpio.h"
+#include "routines.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -34,6 +35,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+typedef enum {
+	INIT,
+	IDLE,
+	BTN,
+	PRINT
+} program_mode_t;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,6 +51,10 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+stmdev_ctx_t mag_ctx;
+program_mode_t program_mode = INIT;
+uint32_t program_mode_time;
+uint32_t button_time;
 
 /* USER CODE END PV */
 
@@ -66,6 +77,50 @@ int _write(int file, char* ptr, int len)
 	return len;
 }
 
+uint16_t idle_led = LED_ORANGE;
+uint16_t btn_led = LED_RED;
+uint16_t print_led = LED_BLUE;
+
+int32_t flash_led(void* self)
+{
+	bad_task_t* bt = (bad_task_t*) self;
+
+//	printf("Flashing LED\n");
+	HAL_GPIO_TogglePin(LED_BANK, *( (uint16_t*) (bt->data) ));
+
+	return 0;
+}
+
+int32_t print_mag(void* self)
+{
+	return print_mag_rt(&mag_ctx);
+}
+
+int32_t end_print_mag(void* self)
+{
+	uint32_t cur = SCHED_TIMER_GET(&htim5);
+	if (cur - program_mode_time > 20*1000*1000U)
+	{
+		printf("# END MAG");
+		program_mode = IDLE;
+		program_mode_time = cur;
+	}
+	return 0;
+}
+
+bad_task_t idle_tasks[] = {
+	{.task = flash_led, .data = &idle_led, .timer = &htim5, .period = 250*1000U, .last = 0U}
+};
+
+bad_task_t btn_tasks[] = {
+	{.task = flash_led, .data = &btn_led, .timer = &htim5, .period = 250*1000U, .last = 0U}
+};
+
+bad_task_t print_tasks[] = {
+	{.task = flash_led, .data = &print_led, .timer = &htim5, .period = 100000U, .last = 0U},
+	{.task = print_mag, .data = NULL, .timer = &htim5, .period = 70000U, .last = 0U},
+	{.task = end_print_mag, .data = NULL, .timer = &htim5, .period = 200000U, .last = 0U}
+};
 /* USER CODE END 0 */
 
 /**
@@ -75,7 +130,6 @@ int _write(int file, char* ptr, int len)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -84,14 +138,13 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  program_mode = IDLE;
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -101,14 +154,33 @@ int main(void)
   MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
 
+  init_mag(&mag_ctx, &hi2c1);
+  printf("\nInitalized magnetometer\n");
+  HAL_TIM_Base_Start(&htim5);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
   while (1)
   {
     /* USER CODE END WHILE */
-
+	switch(program_mode)
+	{
+	  case (INIT):
+		program_mode = IDLE;
+		break;
+	  case (IDLE):
+	    run_tasks(idle_tasks, sizeof(idle_tasks) / sizeof(bad_task_t));
+	    break;
+	  case (BTN):
+	    RUN_TASKS(btn_tasks);
+	  	break;
+	  case (PRINT):
+	    RUN_TASKS(print_tasks);
+	    break;
+	}
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -160,7 +232,48 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void handle_button(void)
+{
+	uint32_t cur = __HAL_TIM_GET_COUNTER(&htim5);
+	GPIO_PinState button_state = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0);
+	if (button_state == GPIO_PIN_SET && program_mode == IDLE)
+	{
+		program_mode = BTN;
+		button_time = cur;
+		program_mode_time = cur;
+	}
+	else if (button_state == GPIO_PIN_RESET && program_mode == BTN)
+	{
+		uint32_t elapsed = cur - button_time;
+		uint32_t sec = 1000000;
+		if (elapsed > 2 * sec)
+		{
+			printf("# START MAG\nt,x,y,z\n");
 
+			program_mode = PRINT;
+			program_mode_time = cur;
+		}
+		else
+		{
+			program_mode = IDLE;
+			program_mode_time = cur;
+		}
+	}
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+//	printf("EXTI %u\n", GPIO_Pin);
+	switch(GPIO_Pin)
+	{
+		case(1):
+			handle_button();
+			break;
+		default:
+			printf("# Pin %u ISR not defined\n", GPIO_Pin);
+			break;
+	}
+}
 /* USER CODE END 4 */
 
 /**

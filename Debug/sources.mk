@@ -21,9 +21,10 @@ C_DEPS :=
 
 # Every subdirectory with source files must be described here
 SUBDIRS := \
-Core/Devices/i3g4250d \
-Core/Devices/lis3mdl \
-Core/Devices/lsm303agr \
+Core/Dev/i3g4250d \
+Core/Dev/lis3mdl \
+Core/Dev/lsm303agr \
+Core/Lib/sched \
 Core/Src \
 Core/Startup \
 Drivers/STM32F4xx_HAL_Driver/Src \

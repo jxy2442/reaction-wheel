@@ -1,4 +1,4 @@
-#include "../Devices/lsm303agr/accel.h"
+#include "../../Dev/lsm303agr/accel.h"
 
 void init_accel(stmdev_ctx_t* ctx, void* handle)
 {

@@ -23,7 +23,7 @@ void init_mag(stmdev_ctx_t* ctx, void* handle)
 	ctx->write_reg = (stmdev_write_ptr) mag_write;
 
 	// initalize registers to default values from datasheet;
-	uint8_t mag_e_controls[] = {0x10U, 0, 0x03U, 0, 0};
+	uint8_t mag_e_controls[] = {0x10U, 0, 0, 0, 0};
 	print_hex(mag_e_controls, sizeof(mag_e_controls));
 	lis3mdl_write_reg(ctx, LIS3MDL_CTRL_REG1,
 			mag_e_controls, sizeof(mag_e_controls));
@@ -97,15 +97,15 @@ int32_t get_mag(stmdev_ctx_t* ctx, vector3_t* output)
 	int16_t buf[3]; // store raw magnetic data
 	lis3mdl_status_reg_t status; // store status register contents
 
-//	ret = lis3mdl_status_get(ctx, &status);
-//	if (ret)
-//	{
-//		return ret; // failed to read status register
-//	}
-//	if (!status.zyxda)
-//	{
-//		return -1; // no data ready
-//	}
+	ret = lis3mdl_status_get(ctx, &status);
+	if (ret)
+	{
+		return ret; // failed to read status register
+	}
+	if (!status.zyxda)
+	{
+		return -1; // no data ready
+	}
 	ret = lis3mdl_magnetic_raw_get(ctx, buf);
 	if (ret)
 	{

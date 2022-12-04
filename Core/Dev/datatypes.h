@@ -16,19 +16,6 @@ typedef struct {
 	float_t y;
 	float_t z;
 } vector3_t;
-/*
-typedef struct {
-	vector3_t* values;
-	int32_t size;
-	int32_t position;
-} measurement_ringbuf_t;
-
-typedef struct {
-	int32_t* values;
-	int32_t size;
-	int32_t position;
-} time_ringbuf_t;
-*/
 
 #define TD_RINGBUF(type, name) typedef struct {type* values; int32_t size; int32_t position;} name;
 #define INIT_RINGBUF(vals) {.values = vals, .size = sizeof(vals) / sizeof(*vals), .position = 0}

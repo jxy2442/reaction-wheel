@@ -73,7 +73,7 @@ int32_t print_mag_rt(stmdev_ctx_t* ctx)
 		printf("# No mag data: %ld\n", ret);
 		return ret;
 	}
-	printf("%lu,%3.2f,%3.2f,%3.2f\tEOL\n", cur_time,
+	printf("%lu,%3.3f,%3.2f,%3.2f\tEOL\n", cur_time,
 			value.x, value.y, value.z);
 
 	return 0;

@@ -172,7 +172,8 @@ int main(void)
 		program_mode = IDLE;
 		break;
 	  case (IDLE):
-	    run_tasks(idle_tasks, sizeof(idle_tasks) / sizeof(bad_task_t));
+		RUN_TASKS(idle_tasks);
+//	    run_tasks(idle_tasks, sizeof(idle_tasks) / sizeof(bad_task_t));
 	    break;
 	  case (BTN):
 	    RUN_TASKS(btn_tasks);

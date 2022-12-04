@@ -52,7 +52,4 @@ Mkfile.old
 dkms.conf
 
 # Cube
-.cproject
-.mxproject
-.project
 .settings

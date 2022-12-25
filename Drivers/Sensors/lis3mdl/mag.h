@@ -17,10 +17,27 @@
 #include<math.h>
 
 #include "stm32f4xx_hal.h"
-#include "../../Dev/datatypes.h"
+#include "datatypes.h"
 #include "lis3mdl_reg.h"
 
 #define LIS3MDL_TIMEOUT 10
+#define LIS3MDL_FS_g 4
+
+#if LIS3MDL_FS_g == 4
+#define LIS3MDL_FS LIS3MDL_4_GAUSS
+#define LIS3MDL_DIVISOR 6842.0f
+#elif LIS3MDL_FS_g == 8
+#define LIS3MDL_FS LIS3MDL_8_GAUSS
+#define LIS3MDL_DIVISOR 3421.0f
+#elif LIS3MDL_FS_g == 12
+#define LIS3MDL_FS LIS3MDL_12_GAUSS
+#define LIS3MDL_DIVISOR 2281.0f
+#elif LIS3MDL_FS_g == 16
+#define LIS3MDL_FS LIS3MDL_16_GAUSS
+#define LIS3MDL_DIVISOR 1711.0f
+#else
+#error Invalid magnetometer full-scale
+#endif
 
 // Initalize control structure and configure device
 void init_mag(stmdev_ctx_t* mag_ctx_ptr, void* handle);
@@ -33,12 +50,6 @@ int32_t mag_write(void* handle, uint8_t reg, uint8_t* buf, uint16_t len);
 
 // Check status and get output if there is new data
 int32_t get_mag(stmdev_ctx_t* ctx, vector3_t* output);
-
-// add measurement to the ringbuffer
-void put_mag(measurement_ringbuf_t* measurements, vector3_t value);
-
-// average of the contents of the ringbuffer
-vector3_t get_smooth_mag(measurement_ringbuf_t* measurements);
 
 // x,y to heading
 float_t get_heading(vector3_t value);

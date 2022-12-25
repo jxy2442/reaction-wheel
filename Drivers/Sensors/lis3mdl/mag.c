@@ -1,5 +1,5 @@
-#include "../../Dev/lis3mdl/mag.h"
-#include<stdio.h>
+#include "mag.h"
+#include <stdio.h>
 
 void print_hex(uint8_t* hexes, uint16_t n)
 {
@@ -17,22 +17,40 @@ void print_hex(uint8_t* hexes, uint16_t n)
  */
 void init_mag(stmdev_ctx_t* ctx, void* handle)
 {
+	int32_t ret;
 
 	ctx->handle = handle;
 	ctx->read_reg = (stmdev_read_ptr) mag_read;
 	ctx->write_reg = (stmdev_write_ptr) mag_write;
 
-	// initalize registers to default values from datasheet;
-	uint8_t mag_e_controls[] = {0x10U, 0, 0, 0, 0};
+	// initalize registers to default values
+	uint8_t mag_e_controls[] = {0x01U, 0, 0, 0, 0};
 	print_hex(mag_e_controls, sizeof(mag_e_controls));
-	lis3mdl_write_reg(ctx, LIS3MDL_CTRL_REG1,
+
+	ret = lis3mdl_write_reg(ctx, LIS3MDL_CTRL_REG1,
 			mag_e_controls, sizeof(mag_e_controls));
+	if (ret)
+	{
+		printf("Unable to write default registers: %ld\n", ret);
+	}
 
 	// set desired output properties
 	// make sure the conversions in get_mag are consistent with this full-scale
-	lis3mdl_full_scale_set(ctx, LIS3MDL_4_GAUSS);
-	lis3mdl_data_rate_set(ctx, LIS3MDL_UHP_155Hz);
-//	lis3mdl_operating_mode_set(ctx, LIS3MDL_CONTINUOUS_MODE);
+	ret = lis3mdl_full_scale_set(ctx, LIS3MDL_FS);
+	if (ret)
+	{
+		printf("Unable to write full-scale: %ld\n", ret);
+	}
+	ret = lis3mdl_data_rate_set(ctx, LIS3MDL_UHP_155Hz);
+	if (ret)
+	{
+		printf("Unable to write data rate: %ld\n", ret);
+	}
+	ret = lis3mdl_operating_mode_set(ctx, LIS3MDL_CONTINUOUS_MODE);
+	if (ret)
+	{
+		printf("Unable to write operating mode: %ld\n", ret);
+	}
 
 	// read all of the registers, you can print them if you want
 	lis3mdl_read_reg(ctx, LIS3MDL_CTRL_REG1,
@@ -112,49 +130,11 @@ int32_t get_mag(stmdev_ctx_t* ctx, vector3_t* output)
 		return ret; // failed to read raw data
 	}
 
-	// nothing failed and we have new data -> convert and store it
-	float_t factor = 1;
-
-	output->x = lis3mdl_from_fs4_to_gauss(buf[0]) * factor;
-	output->y = lis3mdl_from_fs4_to_gauss(buf[1]) * factor;
-	output->z = lis3mdl_from_fs4_to_gauss(buf[2]) * factor;
+	output->x = ((float_t) buf[0]) / LIS3MDL_DIVISOR;
+	output->y = ((float_t) buf[1]) / LIS3MDL_DIVISOR;
+	output->z = ((float_t) buf[2]) / LIS3MDL_DIVISOR;
 
 	return 0;
-}
-
-/* Add a measurement to the ringbuffer containing the magnetometer measurements
- * if and only if the read succeeded
- *
- * measurements		pointer to ringbuffer containing magnetic field measurements
- * value			new value
- */
-
-void put_mag(measurement_ringbuf_t* measurements, vector3_t value)
-{
-	measurements->values[measurements->position] = value;
-	measurements->position = (measurements->position + 1) % measurements->size;
-}
-
-/* Take the average of the ringbuffer's contents
- *
- * measurements		pointer to ringbuffer containing magnetic field measurements
- *
- * returns			the average of the measurements in the ringbuffer
- */
-vector3_t get_smooth_mag(measurement_ringbuf_t* measurements)
-{
-	vector3_t mean = {.x = 0, .y = 0, .z = 0};
-	for (int i = 0; i < measurements->size; i++)
-	{
-		mean.x += measurements->values[i].x;
-		mean.y += measurements->values[i].y;
-		mean.z += measurements->values[i].z;
-	}
-	mean.x /= measurements->size;
-	mean.y /= measurements->size;
-	mean.z /= measurements->size;
-
-	return mean;
 }
 
 /* Get heading using principal arctangent

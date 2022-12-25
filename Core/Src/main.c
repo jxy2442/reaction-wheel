@@ -21,8 +21,8 @@
 #include "i2c.h"
 #include "spi.h"
 #include "tim.h"
+#include "usart.h"
 #include "gpio.h"
-#include "routines.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -51,7 +51,8 @@ typedef enum {
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-stmdev_ctx_t mag_ctx;
+//stmdev_ctx_t mag_ctx;
+stmdev_ctx_t gyro_ctx;
 program_mode_t program_mode = INIT;
 uint32_t program_mode_time;
 uint32_t button_time;
@@ -77,35 +78,66 @@ int _write(int file, char* ptr, int len)
 	return len;
 }
 
+#define PRINT_MAX_BUFF 100
+
+int print_uart(const char* fmt, ...)
+{
+	char buf[PRINT_MAX_BUFF];
+	int status;
+	va_list ap;
+
+	// pass variable number of arguments using va_list function
+	// see the end of [man printf]
+	va_start(ap, fmt);
+	status = vsnprintf(buf, PRINT_MAX_BUFF, fmt, ap);
+	printf(buf);
+	va_end(ap);
+
+	if (status >= PRINT_MAX_BUFF || status < 0)
+	{
+		return -1;
+	}
+
+	status = (int) HAL_UART_Transmit(&huart6, (const uint8_t*) buf, (uint16_t) (status + 1), 100);
+//	const char* test_string = "blarg";
+//	printf("%s: %d\n", test_string, strlen(test_string));
+//	status = (int) HAL_UART_Transmit(&huart1, (const uint8_t*) test_string, strlen(test_string), 100);
+	return status;
+}
+
 uint16_t idle_led = LED_ORANGE;
-uint16_t btn_led = LED_RED;
+uint16_t btn_led = LED_GREEN;
 uint16_t print_led = LED_BLUE;
 
 int32_t flash_led(void* self)
 {
 	bad_task_t* bt = (bad_task_t*) self;
 
-//	printf("Flashing LED\n");
 	HAL_GPIO_TogglePin(LED_BANK, *( (uint16_t*) (bt->data) ));
 
 	return 0;
 }
 
-int32_t print_mag(void* self)
+int32_t print_gyro(void* self)
 {
-	return print_mag_rt(&mag_ctx);
-}
+	int32_t status;
+	vector3_t rate;
 
-int32_t end_print_mag(void* self)
-{
-	uint32_t cur = SCHED_TIMER_GET(&htim5);
-	if (cur - program_mode_time > 20*1000*1000U)
+	status = get_angular_rate(&gyro_ctx, &rate);
+
+	if (status)
 	{
-		printf("# END MAG");
-		program_mode = IDLE;
-		program_mode_time = cur;
+		printf("#RED#Failed reading gyro\n");
+		return status;
 	}
-	return 0;
+
+	status = print_uart("X: %3.3f\tY: %3.3f\tZ: %3.3f\r\n", rate.x, rate.y, rate.z);
+	if (status)
+	{
+		printf("#RED#Failed sending UART: %ld\n", status);
+	}
+
+	return status;
 }
 
 bad_task_t idle_tasks[] = {
@@ -117,9 +149,8 @@ bad_task_t btn_tasks[] = {
 };
 
 bad_task_t print_tasks[] = {
-	{.task = flash_led, .data = &print_led, .timer = &htim5, .period = 100000U, .last = 0U},
-	{.task = print_mag, .data = NULL, .timer = &htim5, .period = 70000U, .last = 0U},
-	{.task = end_print_mag, .data = NULL, .timer = &htim5, .period = 200000U, .last = 0U}
+	{.task = flash_led, .data = &print_led, .timer = &htim5, .period = 500*1000U, .last = 0U},
+	{.task = print_gyro, .data = NULL, .timer = &htim5, .period = 10*1000U, .last = 0U},
 };
 /* USER CODE END 0 */
 
@@ -152,37 +183,38 @@ int main(void)
   MX_SPI1_Init();
   MX_I2C1_Init();
   MX_TIM5_Init();
+  MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  init_mag(&mag_ctx, &hi2c1);
-  printf("\nInitalized magnetometer\n");
+  //init_mag(&mag_ctx, &hi2c1);
+  init_gyro(&gyro_ctx, &hspi1);
   HAL_TIM_Base_Start(&htim5);
+  printf("Initalized gyroscope\nTesting debugging statements\n");
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
+
   while (1)
   {
     /* USER CODE END WHILE */
-	switch(program_mode)
-	{
-	  case (INIT):
-		program_mode = IDLE;
-		break;
-	  case (IDLE):
-		RUN_TASKS(idle_tasks);
-//	    run_tasks(idle_tasks, sizeof(idle_tasks) / sizeof(bad_task_t));
-	    break;
-	  case (BTN):
-	    RUN_TASKS(btn_tasks);
-	  	break;
-	  case (PRINT):
-	    RUN_TASKS(print_tasks);
-	    break;
-	}
+
     /* USER CODE BEGIN 3 */
+	  switch(program_mode)
+	  {
+			case(INIT):
+			case(IDLE):
+			  RUN_TASKS(idle_tasks);
+				  break;
+			case(BTN):
+			  RUN_TASKS(btn_tasks);
+				  break;
+			case(PRINT):
+			  RUN_TASKS(print_tasks);
+				  break;
+	  }
   }
   /* USER CODE END 3 */
 }
@@ -247,10 +279,8 @@ void handle_button(void)
 	{
 		uint32_t elapsed = cur - button_time;
 		uint32_t sec = 1000000;
-		if (elapsed > 2 * sec)
+		if (elapsed > 1 * sec)
 		{
-			printf("# START MAG\nt,x,y,z\n");
-
 			program_mode = PRINT;
 			program_mode_time = cur;
 		}

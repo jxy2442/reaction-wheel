@@ -9,11 +9,11 @@
 #define INC_SENSORS_GYRO_H_
 
 #include "stm32f4xx_hal.h"
-#include "../../Dev/datatypes.h"
-#include "../../Dev/i3g4250d/i3g4250d_reg.h"
+#include "datatypes.h"
+#include "i3g4250d_reg.h"
 
 #define GYRO_FS_dps 500 // 245, 500, 2000
-#define I3G4250D_ODR I3G4250D_ODR_400Hz
+#define I3G4250D_ODR I3G4250D_ODR_100Hz
 #define I3G4250D_TIMEOUT 10
 
 #if GYRO_FS_dps == 245
@@ -31,7 +31,7 @@
 
 // factors in mdps/digit
 
-void init_gyro_ctx(stmdev_ctx_t* ctx, void* handle);
+void init_gyro(stmdev_ctx_t* ctx, void* handle);
 int32_t gyro_read(void* handle, uint8_t reg, uint8_t* buf, uint16_t len);
 int32_t gyro_write(void* handle, uint8_t reg, uint8_t* buf, uint16_t len);
 

@@ -5,7 +5,7 @@
  *      Author: yevge
  */
 
-#include "../../Dev/i3g4250d/gyro.h"
+#include "gyro.h"
 
 void init_gyro(stmdev_ctx_t* ctx, void* handle)
 {
@@ -16,7 +16,7 @@ void init_gyro(stmdev_ctx_t* ctx, void* handle)
 	uint8_t gyro_controls[] = {0x07U, 0, 0, 0, 0}; // control register defaults
 	i3g4250d_write_reg(ctx, I3G4250D_CTRL_REG1, gyro_controls, sizeof(gyro_controls));
 
-	i3g4250d_data_rate_set(ctx, I3G4250D_ODR_400Hz);
+	i3g4250d_data_rate_set(ctx, I3G4250D_ODR);
 	i3g4250d_full_scale_set(ctx, I3G4250D_FS);
 	i3g4250d_int2_route_t gyro_int2_cfg = {.i2_empty = 0, .i2_orun = 0, .i2_wtm = 0, .i2_drdy = 0};
 	i3g4250d_pin_int2_route_set(ctx, gyro_int2_cfg);

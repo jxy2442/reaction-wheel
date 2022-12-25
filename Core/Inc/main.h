@@ -32,12 +32,14 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include "../Dev/i3g4250d/gyro.h"
-#include "../Dev/lis3mdl/mag.h"
-#include "../Dev/lsm303agr/accel.h"
+#include "i3g4250d/gyro.h"
+#include "lis3mdl/mag.h"
+#include "lsm303agr/lsm_accel.h"
 #include "state.h"
-#include "../Lib/sched/badsched.h"
+#include "sched/badsched.h"
 #include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

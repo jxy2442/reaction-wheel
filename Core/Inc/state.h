@@ -1,22 +1,11 @@
 #ifndef __STATE_H__
 #define __STATE_H__
 
-
 #include "main.h"
 #include "tim.h"
 #include <math.h>
 #include <stdint.h>
-#include "../Dev/datatypes.h"
-
-typedef struct
-{
-	measurement_ringbuf_t angular_rates;
-	measurement_ringbuf_t accels;
-	measurement_ringbuf_t mag_fields;
-	time_ringbuf_t angular_rate_times;
-	time_ringbuf_t accel_times;
-	time_ringbuf_t mag_field_times;
-} raw_measurements_t;
+#include "datatypes.h"
 
 typedef enum
 {
@@ -49,8 +38,6 @@ typedef struct
 	/* JOHN CODE HERE */
 } control_state_t;
 
-extern raw_measurements_t raw_measurements;
-extern flight_state_t flight_state;
 extern estimates_t estimate;
 extern control_state_t control_state;
 

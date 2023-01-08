@@ -78,8 +78,9 @@ int _write(int file, char* ptr, int len)
 	return len;
 }
 
-#define PRINT_MAX_BUFF 100
+#define PRINT_MAX_BUFF 144 // can't send more than this at 100Hz for 115200 baud
 
+// send printf-style arguments to UART 6
 int print_uart(const char* fmt, ...)
 {
 	char buf[PRINT_MAX_BUFF];
@@ -90,7 +91,6 @@ int print_uart(const char* fmt, ...)
 	// see the end of [man printf]
 	va_start(ap, fmt);
 	status = vsnprintf(buf, PRINT_MAX_BUFF, fmt, ap);
-	printf(buf);
 	va_end(ap);
 
 	if (status >= PRINT_MAX_BUFF || status < 0)
@@ -98,10 +98,7 @@ int print_uart(const char* fmt, ...)
 		return -1;
 	}
 
-	status = (int) HAL_UART_Transmit(&huart6, (const uint8_t*) buf, (uint16_t) (status + 1), 100);
-//	const char* test_string = "blarg";
-//	printf("%s: %d\n", test_string, strlen(test_string));
-//	status = (int) HAL_UART_Transmit(&huart1, (const uint8_t*) test_string, strlen(test_string), 100);
+	status = (int) HAL_UART_Transmit(&huart6, (const uint8_t*) buf, (uint16_t) (status + 1), 15);
 	return status;
 }
 
@@ -121,9 +118,11 @@ int32_t flash_led(void* self)
 int32_t print_gyro(void* self)
 {
 	int32_t status;
+	uint32_t time;
 	vector3_t rate;
 
 	status = get_angular_rate(&gyro_ctx, &rate);
+	time = __HAL_TIM_GET_COUNTER(&htim5);
 
 	if (status)
 	{
@@ -131,7 +130,8 @@ int32_t print_gyro(void* self)
 		return status;
 	}
 
-	status = print_uart("X: %3.3f\tY: %3.3f\tZ: %3.3f\r\n", rate.x, rate.y, rate.z);
+	status = print_uart("%3.3f\t%+3.3f\t%+3.3f\t%+3.3f\r\n",
+			(float_t) time / 1e6, rate.x, rate.y, rate.z);
 	if (status)
 	{
 		printf("#RED#Failed sending UART: %ld\n", status);
@@ -186,7 +186,6 @@ int main(void)
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  //init_mag(&mag_ctx, &hi2c1);
   init_gyro(&gyro_ctx, &hspi1);
   HAL_TIM_Base_Start(&htim5);
   printf("Initalized gyroscope\nTesting debugging statements\n");
